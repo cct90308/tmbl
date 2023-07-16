@@ -35,7 +35,7 @@ def select_stat():
 
 # Example menu function to select a qualification
 def select_qualification():
-    qualifications = ['0', '100', '300', '500', '700', '1000','Qual']  # Example qualification options
+    qualifications = ['0', '20', '50', '100', '150', '200','500','Qual']  # Example qualification options
     qual_choice = st.sidebar.selectbox("Qualification", qualifications)
     return qual_choice
 
