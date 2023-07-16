@@ -63,9 +63,9 @@ def select_player_status():
 
 # Example menu function to select a time span
 #def select_time_span():
-    time_spans = ['yrs', 'dates']  # Example time span options
-    time_span_choice = st.sidebar.selectbox("Time Span", time_spans)
-    return time_span_choice
+    #time_spans = ['yrs', 'dates']  # Example time span options
+    #time_span_choice = st.sidebar.selectbox("Time Span", time_spans)
+    #return time_span_choice
 
 
 # Example menu function to select a record type
@@ -168,87 +168,7 @@ def plot_ranking1(selected_players,data,pos):
     # 显示图表
     st.pyplot(fig)
 
-#def plot_ranking(selected_players, data, pos):
-    num_rows = len(selected_players)  # Each player has one row for subplot
-    num_cols = 1  # One column for subplot
-    fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(10, 5 * num_rows))
-
-    cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', [(0, 'blue'), (1, 'red')])
-    
-    # 設置透明背景並移除刻度線
-    for ax in axes.ravel():
-        ax.patch.set_alpha(0)
-        ax.set_xticks([])
-        ax.set_yticks([])
-    # 搜寻指标
-    statistics = ['WRC+', 'WOBA', 'BB%', 'K%', 'OPS', 'BABIP', 'HR','H','R','ISO']
-    # 使用@st.cache_data註釋的函數將被緩存，避免重複計算
-    rank_all_players = calculate_rank_all_players(data, statistics)
-    
-    # 将axes转换为numpy数组
-    axes = np.array(axes)
-    
-    # 如果只有一行子图，则将axes转换为一维数组
-    if num_rows == 1:
-        axes = axes.ravel()
-
-    for j, player_name in enumerate(selected_players):
-        player_data = data[data['Name'] == player_name]
-        
-        if num_rows > 1:
-            ax = axes[j]  # 每個球員對應一個子圖
-        else:
-            ax = axes
-        
-        if len(player_data) > 0:
-            # 繪製圖表
-            # 计算特定球员在其他指标上的排名百分比
-            rank_data = rank_all_players.loc[player_data.index, statistics].iloc[0]
-            rank_data = round(rank_data, 2)
-            #st.text(rank_data)
-            # 计算行和列索引
-            row = j // 3
-            col = j % 3
-
-            # 创建子图
-            ax = axes[row, col]
-
-            # 图表设置
-            height = 0.25
-            ax.barh(0, 1, 1, color='gray', alpha=0)
-            bar = patches.Rectangle((0, -height / 6), 1, height/3, color='gray')
-            ax.add_patch(bar)
-
-            circle_step_radius = height * 0.22
-            circle_step1 = Circle((0, 0), radius=circle_step_radius, color='gray')
-            ax.add_patch(circle_step1)
-            circle_step2 = Circle((0.5, 0), radius=circle_step_radius, color='gray')
-            ax.add_patch(circle_step2)
-            circle_step3 = Circle((1, 0), radius=circle_step_radius, color='gray')
-            ax.add_patch(circle_step3)
-
-            # 添加百分比文本在圆形标记内部
-            circle_radius = height * 0.5
-            circle_x = rank_data + circle_radius / 2  # 圆形标记的x坐标
-            circle_y = 0  # 圆形标记的y坐标
-            circle_color = cmap(rank_data)  # 使用渐进色映射确定圆形标记的颜色
-            circle = Circle((circle_x, circle_y), radius=circle_radius, color=circle_color)
-            ax.add_patch(circle)
-            ax.text(circle_x, circle_y, f'{int((rank_data) * 100)}', ha='center', va='center', color='white', weight='bold')
-
-            # 设置标题
-            ax.set_title(f"{statistic}: {player_data[statistic].iloc[0]}")
-        else:
-            # 没有数据时将子图设为透明
-            ax.patch.set_alpha(0)
-    
-    # 刪除多餘的子圖
-    for i in range(num_players, num_rows * 2):
-        if num_rows > 1:
-            fig.delaxes(axes[i])
-    
-    # 顯示圖表
-    st.pyplot(fig)    
+   
 # Streamlit app
 def main():
     # Set page title and layout
