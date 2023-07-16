@@ -9,6 +9,7 @@ import matplotlib.colors as mcolors
 import matplotlib.patches as patches
 from matplotlib.patches import Circle
 import time
+import numpy as np
 
 
 # Create or get the session state
@@ -82,8 +83,172 @@ def select_record_type():
 def calculate_rank_all_players(data, statistics):
     return data[statistics].rank(pct=True)
 
+def plot_ranking1(selected_players,data,pos):
+    # 设置图表样式
+    plt.style.use('seaborn')
 
+    # 图表尺寸
+    #fig, axes = plt.subplots(nrows=4, ncols=3, figsize=(9, 6))
     
+    # 创建渐进色映射
+    cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', [(0, 'blue'), (1, 'red')])
+
+    # 搜寻指标
+    statistics = ['WRC+', 'WOBA', 'BB%', 'K%', 'OPS', 'BABIP', 'HR','H','R','ISO']
+    
+    # 计算子图的行数和列数
+    num_rows = (len(statistics) + 2) // 3  # 加2是为了考虑标题的占用
+    num_cols = min(len(statistics), 3)
+
+    # 图表尺寸
+    fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(9, 6))
+    
+    # 设置背景为透明
+    for ax in axes.flatten():
+        ax.patch.set_alpha(0)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    # 使用@st.cache_data註釋的函數將被緩存，避免重複計算
+    rank_all_players = calculate_rank_all_players(data, statistics)
+
+    for i, statistic in enumerate(statistics):
+        for j, player_name in enumerate(selected_players):
+            # 选择特定球员的数据
+            player_data = data[data['Name'] == player_name]
+            if len(player_data) > 0:
+                # 计算特定球员在其他指标上的排名百分比
+                rank_data = rank_all_players.loc[player_data.index, statistic].iloc[0]
+                rank_data = round(rank_data, 2)
+                #st.text(rank_data)
+                # 计算行和列索引
+                row = i // 3
+                col = i % 3
+
+                # 创建子图
+                ax = axes[row, col]
+
+                # 图表设置
+                height = 0.25
+                ax.barh(0, 1, 1, color='gray', alpha=0)
+                bar = patches.Rectangle((0, -height / 6), 1, height/3, color='gray')
+                ax.add_patch(bar)
+
+                circle_step_radius = height * 0.22
+                circle_step1 = Circle((0, 0), radius=circle_step_radius, color='gray')
+                ax.add_patch(circle_step1)
+                circle_step2 = Circle((0.5, 0), radius=circle_step_radius, color='gray')
+                ax.add_patch(circle_step2)
+                circle_step3 = Circle((1, 0), radius=circle_step_radius, color='gray')
+                ax.add_patch(circle_step3)
+
+                # 添加百分比文本在圆形标记内部
+                circle_radius = height * 0.5
+                circle_x = rank_data + circle_radius / 2  # 圆形标记的x坐标
+                circle_y = 0  # 圆形标记的y坐标
+                circle_color = cmap(rank_data)  # 使用渐进色映射确定圆形标记的颜色
+                circle = Circle((circle_x, circle_y), radius=circle_radius, color=circle_color)
+                ax.add_patch(circle)
+                ax.text(circle_x, circle_y, f'{int((rank_data) * 100)}', ha='center', va='center', color='white', weight='bold')
+
+                # 设置标题
+                ax.set_title(f"{statistic}: {player_data[statistic].iloc[0]}")
+            else:
+                # 没有数据时将子图设为透明
+                ax.patch.set_alpha(0)
+    # 删除多余的子图
+    for i in range(len(statistics), num_rows * num_cols):
+        row = i // num_cols
+        col = i % num_cols
+        fig.delaxes(axes[row, col])
+    fig.suptitle(', '.join(selected_players)+'  '+str(pos), fontsize=16, fontweight='bold')
+    fig.text(0.5, 0.92, '1995 Regular Season PR  (Min 25 PA)', fontsize=12, ha='center')
+    fig.text(0.5, 0.33, 'Ranked by Pos  (Min 25 IP)', fontsize=12, ha='center')
+
+    # 显示图表
+    st.pyplot(fig)
+
+#def plot_ranking(selected_players, data, pos):
+    num_rows = len(selected_players)  # Each player has one row for subplot
+    num_cols = 1  # One column for subplot
+    fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(10, 5 * num_rows))
+
+    cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', [(0, 'blue'), (1, 'red')])
+    
+    # 設置透明背景並移除刻度線
+    for ax in axes.ravel():
+        ax.patch.set_alpha(0)
+        ax.set_xticks([])
+        ax.set_yticks([])
+    # 搜寻指标
+    statistics = ['WRC+', 'WOBA', 'BB%', 'K%', 'OPS', 'BABIP', 'HR','H','R','ISO']
+    # 使用@st.cache_data註釋的函數將被緩存，避免重複計算
+    rank_all_players = calculate_rank_all_players(data, statistics)
+    
+    # 将axes转换为numpy数组
+    axes = np.array(axes)
+    
+    # 如果只有一行子图，则将axes转换为一维数组
+    if num_rows == 1:
+        axes = axes.ravel()
+
+    for j, player_name in enumerate(selected_players):
+        player_data = data[data['Name'] == player_name]
+        
+        if num_rows > 1:
+            ax = axes[j]  # 每個球員對應一個子圖
+        else:
+            ax = axes
+        
+        if len(player_data) > 0:
+            # 繪製圖表
+            # 计算特定球员在其他指标上的排名百分比
+            rank_data = rank_all_players.loc[player_data.index, statistics].iloc[0]
+            rank_data = round(rank_data, 2)
+            #st.text(rank_data)
+            # 计算行和列索引
+            row = j // 3
+            col = j % 3
+
+            # 创建子图
+            ax = axes[row, col]
+
+            # 图表设置
+            height = 0.25
+            ax.barh(0, 1, 1, color='gray', alpha=0)
+            bar = patches.Rectangle((0, -height / 6), 1, height/3, color='gray')
+            ax.add_patch(bar)
+
+            circle_step_radius = height * 0.22
+            circle_step1 = Circle((0, 0), radius=circle_step_radius, color='gray')
+            ax.add_patch(circle_step1)
+            circle_step2 = Circle((0.5, 0), radius=circle_step_radius, color='gray')
+            ax.add_patch(circle_step2)
+            circle_step3 = Circle((1, 0), radius=circle_step_radius, color='gray')
+            ax.add_patch(circle_step3)
+
+            # 添加百分比文本在圆形标记内部
+            circle_radius = height * 0.5
+            circle_x = rank_data + circle_radius / 2  # 圆形标记的x坐标
+            circle_y = 0  # 圆形标记的y坐标
+            circle_color = cmap(rank_data)  # 使用渐进色映射确定圆形标记的颜色
+            circle = Circle((circle_x, circle_y), radius=circle_radius, color=circle_color)
+            ax.add_patch(circle)
+            ax.text(circle_x, circle_y, f'{int((rank_data) * 100)}', ha='center', va='center', color='white', weight='bold')
+
+            # 设置标题
+            ax.set_title(f"{statistic}: {player_data[statistic].iloc[0]}")
+        else:
+            # 没有数据时将子图设为透明
+            ax.patch.set_alpha(0)
+    
+    # 刪除多餘的子圖
+    for i in range(num_players, num_rows * 2):
+        if num_rows > 1:
+            fig.delaxes(axes[i])
+    
+    # 顯示圖表
+    st.pyplot(fig)    
 # Streamlit app
 def main():
     # Set page title and layout
@@ -177,79 +342,23 @@ def main():
         selected_players = st.multiselect('Select a player', player_names)
         pos = ""
     
-        run2_button = st.button("Plot")
-        if run2_button:
+        
+        if st.button("Plot"):
             if selected_players:
-                pos = data[data['Name'] == selected_players[0]]['Pos'].iloc[0]
+                #pos = data[data['Name'] == selected_players[0]]['Pos'].iloc[0]
+                #plot_ranking(selected_players, data,pos)
+                for player_name in selected_players:
+                    #player_data = data[data['Name'] == player_name]
+                    #statistic = select_stat()
+                    #rank_data = calculate_rank_all_players(data, statistic)
+                    #fig = plot_chart(player_data, statistic, rank_data)
+                    #st.pyplot(fig)
+                    #plot_ranking(selected_players,data,pos)
+                    
+                    player_data = data[data['Name'] == player_name]
+                    plot_ranking1([player_name], data, pos)
+                    
 
-                # 设置图表样式
-                plt.style.use('seaborn')
-
-                # 图表尺寸
-                fig, axes = plt.subplots(nrows=4, ncols=3, figsize=(9, 6))
-
-                # 设置背景为透明
-                for ax in axes.flatten():
-                    ax.patch.set_alpha(0)
-                    ax.set_xticks([])
-                    ax.set_yticks([])
-
-                # 创建渐进色映射
-                cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', [(0, 'blue'), (1, 'red')])
-
-                # 搜寻指标
-                statistics = ['WRC+', 'WOBA', 'BB%', 'K%', 'OPS', 'BABIP', 'HR']
-
-                # 使用@st.cache_data註釋的函數將被緩存，避免重複計算
-                rank_all_players = calculate_rank_all_players(data, statistics)
-
-                for i, statistic in enumerate(statistics):
-                    for j, player_name in enumerate(selected_players):
-                        # 选择特定球员的数据
-                        player_data = data[data['Name'] == player_name]
-
-                        # 计算特定球员在其他指标上的排名百分比
-                        rank_data = rank_all_players.loc[player_data.index, statistic].iloc[0]
-                        rank_data = round(rank_data, 2)
-                        # 计算行和列索引
-                        row = i // 3
-                        col = i % 3
-
-                        # 创建子图
-                        ax = axes[row, col]
-
-                        # 图表设置
-                        height = 0.25
-                        ax.barh(0, 1, 1, color='gray', alpha=0)
-                        bar = patches.Rectangle((0, -height / 6), 1, height/3, color='gray')
-                        ax.add_patch(bar)
-
-                        circle_step_radius = height * 0.22
-                        circle_step1 = Circle((0, 0), radius=circle_step_radius, color='gray')
-                        ax.add_patch(circle_step1)
-                        circle_step2 = Circle((0.5, 0), radius=circle_step_radius, color='gray')
-                        ax.add_patch(circle_step2)
-                        circle_step3 = Circle((1, 0), radius=circle_step_radius, color='gray')
-                        ax.add_patch(circle_step3)
-
-                        # 添加百分比文本在圆形标记内部
-                        circle_radius = height * 0.5
-                        circle_x = rank_data + circle_radius / 2  # 圆形标记的x坐标
-                        circle_y = 0  # 圆形标记的y坐标
-                        circle_color = cmap(rank_data)  # 使用渐进色映射确定圆形标记的颜色
-                        circle = Circle((circle_x, circle_y), radius=circle_radius, color=circle_color)
-                        ax.add_patch(circle)
-                        ax.text(circle_x, circle_y, f'{int((rank_data) * 100)}', ha='center', va='center', color='white', weight='bold')
-
-                        # 设置标题
-                        ax.set_title(f"{statistic}: {player_data[statistic].iloc[0]}")
-
-                fig.suptitle(', '.join(selected_players)+'  '+str(pos), fontsize=16, fontweight='bold')
-                fig.text(0.5, 0.92, '1995 Regular Season PR  (Min 25 PA)', fontsize=12, ha='center')
-                fig.text(0.5, 0.33, 'Ranked by Pos  (Min 25 IP)', fontsize=12, ha='center')
-
-                # 显示图表
-                st.pyplot(fig)
             
         # Delete CSV file when Streamlit is closed
         #if not get_session_state()['filename_deleted']:
