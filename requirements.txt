@@ -3,3 +3,4 @@ requests
 beautifulsoup4
 pandas
 matplotlib
+lxml==4.6.3

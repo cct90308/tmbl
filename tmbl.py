@@ -19,8 +19,8 @@ def get_session_state():
         }
     return st.session_state.session_state
 # Example menu function to select a team
-def select_team():
-    teams = ['All', 'Team A', 'Team B', 'Team C']  # Example team options
+#def select_team():
+    teams = ['All', 'ABS', 'PAW', 'FA','GG','YP']  # Example team options
     team_choice = st.sidebar.selectbox("Team", teams)
     return team_choice
 
@@ -61,7 +61,7 @@ def select_player_status():
     return player_status_choice
 
 # Example menu function to select a time span
-def select_time_span():
+#def select_time_span():
     time_spans = ['yrs', 'dates']  # Example time span options
     time_span_choice = st.sidebar.selectbox("Time Span", time_spans)
     return time_span_choice
@@ -91,20 +91,20 @@ def main():
     st.sidebar.title("Filter")
     
     # Get start year from user input
-    startyear = st.text_input("Enter the start year:")
+    startyear = st.text_input("Enter the year:")
 
     # Get end year from user input
-    endyear = st.text_input("Enter the end year:")
+    endyear = startyear
 
     # Use menu functions to select values for remaining variables
     stat = select_stat()
-    team = select_team()
-    qual = select_qualification()
+    team = 'All'
+    qual = '0'
     pos = select_position()
     games = select_game_type()
     rightleft = select_handedness()
     playerstatus = select_player_status()
-    timespan = select_time_span()
+    timespan = 'yrs'
     startdate = '1995-03-10'
     enddate = '1995-10-27'
     records = 'all'
@@ -114,7 +114,7 @@ def main():
     data_dict = {}
     
     # Check if CSV file exists
-    filename = f"{startyear}_{endyear}.csv"
+    filename = f"{startyear}_{endyear}_{stat}_{games}_{playerstatus}.csv"
     if os.path.exists(filename):
         # Load data from CSV
         data = pd.read_csv(filename)
@@ -245,12 +245,12 @@ def main():
             st.pyplot(fig)
         
     # Delete CSV file when Streamlit is closed
-    if not get_session_state()['filename_deleted']:
-        st.text("Waiting for Streamlit to close...")
-        if st.button("Delete CSV"):
-            filename = f"{startyear}_{endyear}.csv"
-            os.remove(filename)
-            get_session_state()['filename_deleted'] = True
+    #if not get_session_state()['filename_deleted']:
+        #st.text("Waiting for Streamlit to close...")
+        #if st.button("Delete CSV"):
+            #filename = f"{startyear}_{endyear}.csv"
+            #os.remove(filename)
+            #get_session_state()['filename_deleted'] = True
         
         
 
