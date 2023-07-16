@@ -19,17 +19,7 @@ def get_session_state():
             'filename_deleted': False
         }
     return st.session_state.session_state
-# Example menu function to select a team
-#def select_team():
-    #teams = ['All', 'ABS', 'PAW', 'FA','GG','YP']  # Example team options
-    #team_choice = st.sidebar.selectbox("Team", teams)
-    #return team_choice
 
-# Example menu function to select a position
-#def select_position():
-    #positions = ['All', 'Position 1', 'Position 2', 'Position 3']  # Example position options
-    #position_choice = st.sidebar.selectbox("Position", positions)
-    #return position_choice
 
 # Example menu function to select a game type
 def select_game_type():
@@ -61,12 +51,6 @@ def select_player_status():
     player_status_choice = st.sidebar.selectbox("Player Status", player_statuses)
     return player_status_choice
 
-# Example menu function to select a time span
-#def select_time_span():
-    #time_spans = ['yrs', 'dates']  # Example time span options
-    #time_span_choice = st.sidebar.selectbox("Time Span", time_spans)
-    #return time_span_choice
-
 
 # Example menu function to select a record type
 def select_record_type():
@@ -74,15 +58,9 @@ def select_record_type():
     record_type_choice = st.sidebar.selectbox("Record Type", record_types)
     return record_type_choice
 
-# Example menu function to select a record type
-#def select_type_type():
-    #type_types = ['0', '1', '2', '3']  # Example record type options
-    #type_type_choice = st.sidebar.selectbox("0-dashboard 1-standard 2-advanced", type_types)
-    #return type_type_choice
 
 def select_statics(data):
-    excluded_stats = ['#', 'Name', 'AGE', 'Role', 'Team', 'Pos']  # 要排除的统计指标列
-    #stats = data.columns[1:]  # 使用data的第一列作为选项列表
+    excluded_stats = ['#', 'Name', 'AGE', 'Role', 'Team', 'Pos']  # Columns of statistics to be excluded
     stats = [col for col in data.columns if col not in excluded_stats] 
     stat_choices = st.sidebar.multiselect("Statistic (最少四項)", stats)
     return stat_choices
@@ -105,25 +83,23 @@ def calculate_rank_all_players(data, statistics, stat):
 
   
 def plot_ranking(selected_players,data,pos,statistics,stat):
-    # 设置图表样式
+    # Set the plot style
     plt.style.use('seaborn')
 
-    # 图表尺寸
-    #fig, axes = plt.subplots(nrows=4, ncols=3, figsize=(9, 6))
     
-    # 创建渐进色映射
+    # Create a progressive color map
     cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', [(0, 'blue'), (1, 'red')])
 
     
     
-    # 计算子图的行数和列数
-    num_rows = (len(statistics) + 2) // 3  # 加2是为了考虑标题的占用
+    # Calculate the number of rows and columns for subplots
+    num_rows = (len(statistics) + 2) // 3  #Adding 2 is to consider the occupation of the title
     num_cols = min(len(statistics), 3)
 
-    # 图表尺寸
+    # Set the figure size
     fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(9, 6))
     
-    # 设置背景为透明
+    # Set the background as transparent
     for ax in axes.flatten():
         ax.patch.set_alpha(0)
         ax.set_xticks([])
@@ -134,21 +110,22 @@ def plot_ranking(selected_players,data,pos,statistics,stat):
 
     for i, statistic in enumerate(statistics):
         for j, player_name in enumerate(selected_players):
-            # 选择特定球员的数据
+            #  Select data for the specific player
             player_data = data[data['Name'] == player_name]
             if len(player_data) > 0:
-                # 计算特定球员在其他指标上的排名百分比
+                # Calculate the ranking percentile for the player in other statistics
+                rank_data = rank_all_players.loc[player_data.index, statistic].iloc[0]
                 rank_data = rank_all_players.loc[player_data.index, statistic].iloc[0]
                 rank_data = round(rank_data, 2)
                 #st.text(rank_data)
-                # 计算行和列索引
+                # Calculate the row and column indices
                 row = i // 3
                 col = i % 3
 
-                # 创建子图
+                # Create subplots
                 ax = axes[row, col]
 
-                # 图表设置
+                # Set the plot settings
                 height = 0.25
                 ax.barh(0, 1, 1, color='gray', alpha=0)
                 bar = patches.Rectangle((0, -height / 6), 1, height/3, color='gray')
@@ -162,34 +139,33 @@ def plot_ranking(selected_players,data,pos,statistics,stat):
                 circle_step3 = Circle((1, 0), radius=circle_step_radius, color='gray')
                 ax.add_patch(circle_step3)
 
-                # 添加百分比文本在圆形标记内部
+                # Add the percentage text inside the circular marker
                 circle_radius = height * 0.5
-                circle_x = rank_data + circle_radius / 2  # 圆形标记的x坐标
-                circle_y = 0  # 圆形标记的y坐标
-                circle_color = cmap(rank_data)  # 使用渐进色映射确定圆形标记的颜色
+                circle_x = rank_data + circle_radius / 2  
+                circle_y = 0  
+                circle_color = cmap(rank_data) 
                 circle = Circle((circle_x, circle_y), radius=circle_radius, color=circle_color)
                 ax.add_patch(circle)
                 ax.text(circle_x, circle_y, f'{int((rank_data) * 100)}', ha='center', va='center', color='white', weight='bold')
 
-                # 设置标题
+                # Set the title
                 ax.set_title(f"{statistic}: {player_data[statistic].iloc[0]}")
             else:
-                # 没有数据时将子图设为透明
+                # Set the subplot as transparent when there is no data
                 ax.patch.set_alpha(0)
-    # 删除多余的子图
+    # Remove extra subplots
     for i in range(len(statistics), num_rows * num_cols):
         row = i // num_cols
         col = i % num_cols
         fig.delaxes(axes[row, col])
-    # 调整子图的位置和间距
+    # Adjust the position and spacing of subplots
     fig.subplots_adjust(top=0.85, bottom=0.25, hspace=0.5)
     fig.suptitle(', '.join(selected_players)+'  '+str(pos), fontsize=16, fontweight='bold')
     fig.text(0.5, 0.05, '', fontsize=12, ha='center')
     fig.text(0.5, 0.92, '1995 Regular Season PR', fontsize=12, ha='center')
     fig.text(0.5, 0.05, '', fontsize=12, ha='center')
-    #fig.text(0.5, 0.33, 'Ranked by Pos  (Min 25 IP)', fontsize=12, ha='center')
 
-    # 显示图表
+    # Display the plot
     st.pyplot(fig)
 
 def get_position(data, stat):
@@ -203,7 +179,11 @@ def get_position(data, stat):
 # Streamlit app
 def main():
     # Set page title and layout
-    st.set_page_config(page_title="Filter", layout="wide")
+    st.set_page_config(page_title="TMBL", layout="wide")
+    
+    # Set the title in the center of the page
+    st.markdown('<h1 style="text-align: center; font-weight: bold;">TMBL savant?</h1>', unsafe_allow_html=True)
+    
 
     # Display the title in the sidebar
     st.sidebar.title("Filter")
@@ -249,14 +229,13 @@ def main():
             
                 type_value = types[i % len(types)]
                 
-                #time.sleep(3)
                 # Generate the URL with selected variable values
                 http = f"https://atl-01.statsplus.net/tmbl/playerstats/?sort=ops,d&stat={stat}&team={team}&qual={qual}&pos={pos}&more=true&games={games}&startyear={startyear}&endyear={endyear}&rightleft={rightleft}&playerstatus={playerstatus}&timespan={timespan}&startdate={startdate}&enddate={enddate}&records={records}&type={type_value}"
 
                 # Send HTTP request and scrape the webpage (code for scraping is commented out)
                 response = requests.get(http)
                 soup = BeautifulSoup(response.content, 'html.parser')
-                # 解析网页内容并提取球员统计数据
+                # Parse the webpage content and extract player statistics data
                 table = soup.find('table')
                 data = pd.read_html(str(table))[0]
                 st.text(f"Fetching data... Progress: {i + 1}/3")
@@ -287,20 +266,20 @@ def main():
     if "data" in data_dict:
         data = data_dict["data"]
 
-        # 获取所有球员名称列表
+        # Get a list of all player names
         player_names = data['Name'].unique().tolist()
-        # 选择要显示的球员
+        # Select the players to display
         selected_players = st.multiselect('Select a player', player_names)
         pos = ""
-        # 选择统计指标
+        # Select the statistics
         statistics = select_statics(data)
         
         if st.button("Plot"):
             if selected_players:
                 for player_name in selected_players:
                     player_data = data[data['Name'] == player_name]
-                    pos = get_position(player_data, stat)  # 获取位置信息
-                    plot_ranking([player_name], data, pos, statistics,stat)  #将选择的stat和pos传递给plot_ranking函数
+                    pos = get_position(player_data, stat)  
+                    plot_ranking([player_name], data, pos, statistics,stat)
                     
 
             
