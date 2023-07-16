@@ -273,7 +273,10 @@ def main():
         pos = ""
         # Select the statistics
         statistics = select_statics(data)
-        
+        # Check if stat_choices is empty
+        if not statistics:
+            st.warning("請選取Statistic")
+            return
         if st.button("Plot"):
             if selected_players:
                 for player_name in selected_players:
