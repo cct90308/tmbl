@@ -21,15 +21,15 @@ def get_session_state():
     return st.session_state.session_state
 # Example menu function to select a team
 #def select_team():
-    teams = ['All', 'ABS', 'PAW', 'FA','GG','YP']  # Example team options
-    team_choice = st.sidebar.selectbox("Team", teams)
-    return team_choice
+    #teams = ['All', 'ABS', 'PAW', 'FA','GG','YP']  # Example team options
+    #team_choice = st.sidebar.selectbox("Team", teams)
+    #return team_choice
 
 # Example menu function to select a position
-def select_position():
-    positions = ['All', 'Position 1', 'Position 2', 'Position 3']  # Example position options
-    position_choice = st.sidebar.selectbox("Position", positions)
-    return position_choice
+#def select_position():
+    #positions = ['All', 'Position 1', 'Position 2', 'Position 3']  # Example position options
+    #position_choice = st.sidebar.selectbox("Position", positions)
+    #return position_choice
 
 # Example menu function to select a game type
 def select_game_type():
@@ -40,19 +40,19 @@ def select_game_type():
 # Example menu function to select a statistic
 def select_stat():
     stats = ['bat', 'pitch', 'field']  # Example statistic options
-    stat_choice = st.sidebar.selectbox("Statistic", stats)
+    stat_choice = st.sidebar.selectbox("Role stats", stats)
     return stat_choice
 
 # Example menu function to select a qualification
 def select_qualification():
-    qualifications = ['0', '25', '50', '100', '250', '500']  # Example qualification options
+    qualifications = ['0', '100', '300', '500', '700', '1000','Qual']  # Example qualification options
     qual_choice = st.sidebar.selectbox("Qualification", qualifications)
     return qual_choice
 
 # Example menu function to select a handedness
 def select_handedness():
     handedness = ['all', 'R', 'L']  # Example handedness options
-    handedness_choice = st.sidebar.selectbox("Handedness", handedness)
+    handedness_choice = st.sidebar.selectbox("vs R/L", handedness)
     return handedness_choice
 
 # Example menu function to select a player status
@@ -80,10 +80,31 @@ def select_record_type():
     #type_type_choice = st.sidebar.selectbox("0-dashboard 1-standard 2-advanced", type_types)
     #return type_type_choice
 
-def calculate_rank_all_players(data, statistics):
-    return data[statistics].rank(pct=True)
+def select_statics(data):
+    excluded_stats = ['#', 'Name', 'AGE', 'Role', 'Team', 'Pos']  # 要排除的统计指标列
+    #stats = data.columns[1:]  # 使用data的第一列作为选项列表
+    stats = [col for col in data.columns if col not in excluded_stats] 
+    stat_choices = st.sidebar.multiselect("Statistic (最少四項)", stats)
+    return stat_choices
+    
+def calculate_rank_all_players(data, statistics, stat):
+    rank_data = data[statistics].rank(pct=True)
+    
+    if stat == 'pitch':
+        pitch_cols = ['L', 'BB/9', 'HR/9', 'HR/FB%', 'ERA', 'FIP', 'XFIP', 'BS', 'ER', 'BB', 'HP', 'WP', 'BK', 'BB%', 'AVG', 'WHIP', 'BABIP']
+        pitch_cols_to_reverse = list(set(statistics).intersection(set(pitch_cols)))
+        if pitch_cols_to_reverse:
+            rank_data[pitch_cols_to_reverse] = 1 - rank_data[pitch_cols_to_reverse]
+    elif stat == 'bat':
+        bat_cols = ['K%', 'K']
+        bat_cols_to_reverse = list(set(statistics).intersection(set(bat_cols)))
+        if bat_cols_to_reverse:
+            rank_data[bat_cols_to_reverse] = 1 - rank_data[bat_cols_to_reverse]
+    
+    return rank_data
 
-def plot_ranking1(selected_players,data,pos):
+  
+def plot_ranking(selected_players,data,pos,statistics,stat):
     # 设置图表样式
     plt.style.use('seaborn')
 
@@ -93,8 +114,7 @@ def plot_ranking1(selected_players,data,pos):
     # 创建渐进色映射
     cmap = mcolors.LinearSegmentedColormap.from_list('custom_cmap', [(0, 'blue'), (1, 'red')])
 
-    # 搜寻指标
-    statistics = ['WRC+', 'WOBA', 'BB%', 'K%', 'OPS', 'BABIP', 'HR','H','R','ISO']
+    
     
     # 计算子图的行数和列数
     num_rows = (len(statistics) + 2) // 3  # 加2是为了考虑标题的占用
@@ -110,7 +130,7 @@ def plot_ranking1(selected_players,data,pos):
         ax.set_yticks([])
 
     # 使用@st.cache_data註釋的函數將被緩存，避免重複計算
-    rank_all_players = calculate_rank_all_players(data, statistics)
+    rank_all_players = calculate_rank_all_players(data, statistics,stat)
 
     for i, statistic in enumerate(statistics):
         for j, player_name in enumerate(selected_players):
@@ -161,13 +181,24 @@ def plot_ranking1(selected_players,data,pos):
         row = i // num_cols
         col = i % num_cols
         fig.delaxes(axes[row, col])
+    # 调整子图的位置和间距
+    fig.subplots_adjust(top=0.85, bottom=0.25, hspace=0.5)
     fig.suptitle(', '.join(selected_players)+'  '+str(pos), fontsize=16, fontweight='bold')
-    fig.text(0.5, 0.92, '1995 Regular Season PR  (Min 25 PA)', fontsize=12, ha='center')
-    fig.text(0.5, 0.33, 'Ranked by Pos  (Min 25 IP)', fontsize=12, ha='center')
+    fig.text(0.5, 0.05, '', fontsize=12, ha='center')
+    fig.text(0.5, 0.92, '1995 Regular Season PR', fontsize=12, ha='center')
+    fig.text(0.5, 0.05, '', fontsize=12, ha='center')
+    #fig.text(0.5, 0.33, 'Ranked by Pos  (Min 25 IP)', fontsize=12, ha='center')
 
     # 显示图表
     st.pyplot(fig)
 
+def get_position(data, stat):
+    if stat == 'pitch':
+        return data['Role'].iloc[0]
+    elif stat == 'bat':
+        return data['Pos'].iloc[0]
+    else:
+        return ''
    
 # Streamlit app
 def main():
@@ -186,15 +217,15 @@ def main():
     # Use menu functions to select values for remaining variables
     stat = select_stat()
     team = 'All'
-    qual = '0'
-    pos = select_position()
+    qual = select_qualification()
+    pos = 'All'
     games = select_game_type()
     rightleft = select_handedness()
     playerstatus = select_player_status()
     timespan = 'yrs'
     startdate = '1995-03-10'
     enddate = '1995-10-27'
-    records = 'all'
+    records = 'All'
     types = [0, 1, 2]
     
     
@@ -204,7 +235,7 @@ def main():
     
     
     # Check if CSV file exists
-    filename = f"{startyear}_{endyear}_{stat}_{games}_{playerstatus}.csv"
+    filename = f"{startyear}_{endyear}_{stat}_{games}_{playerstatus}_{qual}_{rightleft}.csv"
     if os.path.exists(filename):
         # Load data from CSV
         data = pd.read_csv(filename)
@@ -218,7 +249,7 @@ def main():
             
                 type_value = types[i % len(types)]
                 
-                time.sleep(3)
+                #time.sleep(3)
                 # Generate the URL with selected variable values
                 http = f"https://atl-01.statsplus.net/tmbl/playerstats/?sort=ops,d&stat={stat}&team={team}&qual={qual}&pos={pos}&more=true&games={games}&startyear={startyear}&endyear={endyear}&rightleft={rightleft}&playerstatus={playerstatus}&timespan={timespan}&startdate={startdate}&enddate={enddate}&records={records}&type={type_value}"
 
@@ -243,7 +274,7 @@ def main():
                
             data = pd.merge(data1,data2, on='Name',how='outer',suffixes=('', '_x'))
             data = pd.merge(data,data3, on='Name',how='outer',suffixes=('', '_y'))
-            
+            data=data.filter(regex=r'^(?!.*(_x|_y)$)')
             # Save data to CSV
             data.to_csv(filename, index=False)
             data_dict['data'] = data
@@ -261,32 +292,25 @@ def main():
         # 选择要显示的球员
         selected_players = st.multiselect('Select a player', player_names)
         pos = ""
-    
+        # 选择统计指标
+        statistics = select_statics(data)
         
         if st.button("Plot"):
             if selected_players:
-                #pos = data[data['Name'] == selected_players[0]]['Pos'].iloc[0]
-                #plot_ranking(selected_players, data,pos)
                 for player_name in selected_players:
-                    #player_data = data[data['Name'] == player_name]
-                    #statistic = select_stat()
-                    #rank_data = calculate_rank_all_players(data, statistic)
-                    #fig = plot_chart(player_data, statistic, rank_data)
-                    #st.pyplot(fig)
-                    #plot_ranking(selected_players,data,pos)
-                    
                     player_data = data[data['Name'] == player_name]
-                    plot_ranking1([player_name], data, pos)
+                    pos = get_position(player_data, stat)  # 获取位置信息
+                    plot_ranking([player_name], data, pos, statistics,stat)  #将选择的stat和pos传递给plot_ranking函数
                     
 
             
         # Delete CSV file when Streamlit is closed
-        #if not get_session_state()['filename_deleted']:
-            #st.text("Waiting for Streamlit to close...")
-            #if st.button("Delete CSV"):
-                #filename = f"{startyear}_{endyear}.csv"
-                #os.remove(filename)
-                #get_session_state()['filename_deleted'] = True
+        if not get_session_state()['filename_deleted']:
+            st.text("Waiting for Streamlit to close...")
+            if st.button("Delete CSV"):
+                #filename = f"{startyear}_{endyear}_{stat}_{games}_{playerstatus}.csv"
+                os.remove(filename)
+                get_session_state()['filename_deleted'] = True
         
         
 
