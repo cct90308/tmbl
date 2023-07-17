@@ -82,7 +82,7 @@ def calculate_rank_all_players(data, statistics, stat):
     return rank_data
 
   
-def plot_ranking(selected_players,data,pos,statistics,stat):
+def plot_ranking(selected_players,data,pos,statistics,stat,startyear):
     # Set the plot style
     plt.style.use('seaborn')
 
@@ -282,7 +282,7 @@ def main():
                 for player_name in selected_players:
                     player_data = data[data['Name'] == player_name]
                     pos = get_position(player_data, stat)  
-                    plot_ranking([player_name], data, pos, statistics,stat)
+                    plot_ranking([player_name], data, pos, statistics,stat,startyear)
                     
 
             
