@@ -162,7 +162,7 @@ def plot_ranking(selected_players,data,pos,statistics,stat):
     fig.subplots_adjust(top=0.85, bottom=0.25, hspace=0.5)
     fig.suptitle(', '.join(selected_players)+'  '+str(pos), fontsize=16, fontweight='bold')
     fig.text(0.5, 0.05, '', fontsize=12, ha='center')
-    fig.text(0.5, 0.92, f'{year} Regular Season PR', fontsize=12, ha='center')
+    fig.text(0.5, 0.92, f'{startyear} Regular Season PR', fontsize=12, ha='center')
     fig.text(0.5, 0.05, '', fontsize=12, ha='center')
 
     # Display the plot
