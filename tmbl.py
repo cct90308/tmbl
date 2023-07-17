@@ -78,11 +78,15 @@ def calculate_rank_all_players(data, statistics, stat):
         bat_cols_to_reverse = list(set(statistics).intersection(set(bat_cols)))
         if bat_cols_to_reverse:
             rank_data[bat_cols_to_reverse] = 1 - rank_data[bat_cols_to_reverse]
-    
+    elif stat == 'field':
+        field_cols = ['E']
+        field_cols_to_reverse = list(set(statistics).intersection(set(field_cols)))
+        if field_cols_to_reverse:
+            rank_data[field_cols_to_reverse] = 1 - rank_data[field_cols_to_reverse]
     return rank_data
 
   
-def plot_ranking(selected_players,data,pos,statistics,stat,startyear):
+def plot_ranking(selected_players,data,pos,statistics,stat,startyear,games):
     # Set the plot style
     plt.style.use('seaborn')
 
@@ -159,10 +163,18 @@ def plot_ranking(selected_players,data,pos,statistics,stat,startyear):
         col = i % num_cols
         fig.delaxes(axes[row, col])
     # Adjust the position and spacing of subplots
+    if games == 'reg':
+        season_text = 'Regular Season'
+    elif games == 'all':
+        season_text = 'All Games'
+    elif games == 'playoff':
+        season_text = 'Playoff'
+    else:
+        season_text = ''
     fig.subplots_adjust(top=0.85, bottom=0.25, hspace=0.5)
     fig.suptitle(', '.join(selected_players)+'  '+str(pos), fontsize=16, fontweight='bold')
     fig.text(0.5, 0.05, '', fontsize=12, ha='center')
-    fig.text(0.5, 0.92, f'{startyear} Regular Season PR', fontsize=12, ha='center')
+    fig.text(0.5, 0.92, f'{startyear} {season_text} PR', fontsize=12, ha='center')
     fig.text(0.5, 0.05, '', fontsize=12, ha='center')
 
     # Display the plot
