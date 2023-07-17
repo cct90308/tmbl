@@ -294,7 +294,7 @@ def main():
                 for player_name in selected_players:
                     player_data = data[data['Name'] == player_name]
                     pos = get_position(player_data, stat)  
-                    plot_ranking([player_name], data, pos, statistics,stat,startyear)
+                    plot_ranking([player_name], data, pos, statistics,stat,startyear,games)
                     
 
             
