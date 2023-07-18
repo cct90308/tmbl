@@ -74,7 +74,7 @@ def calculate_rank_all_players(data, statistics, stat):
         if pitch_cols_to_reverse:
             rank_data[pitch_cols_to_reverse] = 1 - rank_data[pitch_cols_to_reverse]
     elif stat == 'bat':
-        bat_cols = ['K%', 'K']
+        bat_cols = [ 'K']
         bat_cols_to_reverse = list(set(statistics).intersection(set(bat_cols)))
         if bat_cols_to_reverse:
             rank_data[bat_cols_to_reverse] = 1 - rank_data[bat_cols_to_reverse]
