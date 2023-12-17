@@ -88,7 +88,7 @@ def calculate_rank_all_players(data, statistics, stat):
   
 def plot_ranking(selected_players,data,pos,statistics,stat,startyear,games):
     # Set the plot style
-    plt.style.use('seaborn')
+    #plt.style.use('seaborn')
 
     
     # Create a progressive color map
